@@ -8,8 +8,8 @@ const axios = require("axios");
 
 const port = process.env.PORT;
 
-app.listen(port, () => {
-  console.log(`app is running on localhost:${port}`);
+app.listen(port, "0.0.0.0", () => {
+  console.log(`app is running on 0.0.0.0:${port}`);
 });
 
 app.use(express.json());
