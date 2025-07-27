@@ -5,6 +5,7 @@ const app = express();
 require("dotenv").config();
 const cors = require("cors");
 const axios = require("axios");
+const { ExplainVerbosity } = require("mongodb");
 
 const port = process.env.PORT;
 
@@ -19,6 +20,12 @@ app.use(cors());
 app.get("/", (req, res) => {
   res.send("<h1>Hello from Alex</h1>");
 });
+
+app.post('/test', (req, res) => {
+  console.log("POST body:", req.body);
+  res.json({ ok: true, body: req.body });
+});
+
 
 //middleware for token
 // Middleware to generate token
@@ -109,9 +116,11 @@ app.post("/lion/callback", (req, res) => {
 
   if (!callbackData.Body.stkCallback.CallbackMetadata) {
     console.log(callbackData.Body);
-    res.status(200).json({ message: "Callback received successfully" });
+    return res.status(200).json({ message: "Callback received successfully" });
   }
 
   console.log(callbackData.Body.stkCallback.CallbackMetadata);
-  
+
+  // Send a response here as well!
+  return res.status(200).json({ message: "Callback received successfully" });
 });
