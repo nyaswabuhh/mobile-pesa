@@ -1,17 +1,26 @@
 const express = require("express");
-
 const app = express();
 
 require("dotenv").config();
 const cors = require("cors");
 const axios = require("axios");
-const { ExplainVerbosity } = require("mongodb");
+const mongoose = require("mongoose");
 
 const port = process.env.PORT;
+const Payment = require("./models/paymentModel");
 
 app.listen(port, "0.0.0.0", () => {
   console.log(`app is running on 0.0.0.0:${port}`);
 });
+
+mongoose
+  .connect(process.env.MONGO_URL)
+  .then(() => {
+    console.log("database connected successfully");
+  })
+  .catch((err) => {
+    console.log(err.message);
+  });
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -21,11 +30,10 @@ app.get("/", (req, res) => {
   res.send("<h1>Hello from Alex</h1>");
 });
 
-app.post('/test', (req, res) => {
+app.post("/test", (req, res) => {
   console.log("POST body:", req.body);
   res.json({ ok: true, body: req.body });
 });
-
 
 //middleware for token
 // Middleware to generate token
@@ -90,7 +98,7 @@ app.post("/stk", generateToken, async (req, res) => {
         PartyA: `254${phone}`,
         PartyB: shortcode,
         PhoneNumber: `254${phone}`,
-        CallBackURL: "https://apisimba.com/lion/callback",
+        CallBackURL: "https://apisimba.com/callback",
         AccountReference: "Test Paid",
         TransactionDesc: "Test",
       },
@@ -110,9 +118,9 @@ app.post("/stk", generateToken, async (req, res) => {
     });
 });
 
-app.post("/lion/callback", (req, res) => {
+app.post("/callback", (req, res) => {
   const callbackData = req.body;
-  console.log(callbackData.Body);
+  // console.log(callbackData.Body);
 
   if (!callbackData.Body.stkCallback.CallbackMetadata) {
     console.log(callbackData.Body);
@@ -120,6 +128,25 @@ app.post("/lion/callback", (req, res) => {
   }
 
   console.log(callbackData.Body.stkCallback.CallbackMetadata);
+
+  const amount = callbackData.Body.stkCallback.CallbackMetadata.Item[0].Value;
+  const trx_id = callbackData.Body.stkCallback.CallbackMetadata.Item[1].Value;
+  const phone = callbackData.Body.stkCallback.CallbackMetadata.Item[4].Value;
+  console.log({ phone, amount, trx_id });
+
+  const payment = new Payment();
+  payment.number = phone;
+  payment.amount = amount;
+  payment.trx_id = trx_id;
+
+  payment
+    .save()
+    .then((data) => {
+      console.log({message:"saved successfully", data});
+    })
+    .catch((err) => {
+      console.log(err.message);
+    });
 
   // Send a response here as well!
   return res.status(200).json({ message: "Callback received successfully" });
