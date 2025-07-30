@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>STK PUSH</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      crossorigin="anonymous"
+    />
+  </head>
+  <body>
+    <div id="app" class="container py-5">
+      <h1 class="mb-4 text-center">STK Push Payment</h1>
+      <div class="row justify-content-center">
+        <div class="col-md-6">
+          <form
+            @submit.prevent="stkPush"
+            class="border p-4 rounded shadow-sm bg-light"
+          >
+            <div class="mb-3">
+              <label for="phone" class="form-label">Phone Number</label>
+              <input
+                id="phone"
+                type="text"
+                class="form-control"
+                placeholder="0700123123"
+                v-model="phone"
+                maxlength="10"
+                autocomplete="off"
+              />
+              <div v-if="phoneError" class="text-danger mt-1">
+                {{ phoneError }}
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="amount" class="form-label">Amount (KES)</label>
+              <input
+                id="amount"
+                type="number"
+                class="form-control"
+                placeholder="1"
+                v-model.number="amount"
+                min="1"
+              />
+              <div v-if="amountError" class="text-danger mt-1">
+                {{ amountError }}
+              </div>
+            </div>
+            <button
+              type="submit"
+              class="btn btn-primary w-100"
+              :disabled="loading"
+            >
+              {{ loading ? "Processing..." : "Make Payment" }}
+            </button>
+          </form>
+          <div v-if="message" :class="`alert mt-4 ${messageType}`" role="alert">
+            {{ message }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.7.16/dist/vue.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.3.0/dist/axios.min.js"></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"
+      crossorigin="anonymous"
+    ></script>
+
+    <script>
+      new Vue({
+        el: "#app",
+        data: {
+          phone: "",
+          amount: null,
+          loading: false,
+          phoneError: "",
+          amountError: "",
+          message: "",
+          messageType: "",
+        },
+        methods: {
+          validate() {
+            this.phoneError = "";
+            this.amountError = "";
+            let valid = true;
+
+            if (!/^\d{10}$/.test(this.phone)) {
+              this.phoneError = "Please enter a valid 10-digit phone number.";
+              valid = false;
+            }
+            if (!this.amount || this.amount < 1) {
+              this.amountError = "Amount must be at least 1.";
+              valid = false;
+            }
+
+            return valid;
+          },
+          stkPush() {
+            if (!this.validate()) return;
+
+            this.loading = true;
+            this.message = "";
+
+            axios
+              .post("https://apisimba.com/stk", {
+                phone: this.phone,
+                amount: this.amount,
+              })
+              .then(() => {
+                this.message = "Payment request sent successfully!";
+                this.messageType = "alert-success";
+                this.phone = "";
+                this.amount = null;
+                
+                setTimeout(() => {
+                  this.message = "";
+                }, 5000);
+              })
+              .catch(() => {
+                this.message = "STK Push failed. Please try again.";
+                this.messageType = "alert-danger";
+
+                setTimeout(() => {
+                  this.message = "";
+                }, 5000);
+              })
+              .finally(() => {
+                this.loading = false;
+              });
+          },
+        },
+      });
+    </script>
+  </body>
+</html>

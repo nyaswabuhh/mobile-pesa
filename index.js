@@ -134,15 +134,16 @@ app.post("/callback", (req, res) => {
   const phone = callbackData.Body.stkCallback.CallbackMetadata.Item[4].Value;
   console.log({ phone, amount, trx_id });
 
-  const payment = new Payment();
-  payment.number = phone;
-  payment.amount = amount;
-  payment.trx_id = trx_id;
+  const payment = new Payment({
+    number: phone,
+    amount: amount,
+    trx_id: trx_id,
+  });
 
   payment
     .save()
     .then((data) => {
-      console.log({message:"saved successfully", data});
+      console.log({ message: "saved successfully", data });
     })
     .catch((err) => {
       console.log(err.message);
